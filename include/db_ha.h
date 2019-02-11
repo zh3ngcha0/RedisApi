@@ -11,6 +11,9 @@
 
 /************************* database tables *****************************************/
 
+#undef DEFINE_ENUM // adding prefix to avoid conflict
+#define DEFINE_ENUM(name) DBTBL_HA_##name
+
 typedef enum {
     DBTBL_HA_IPSEC_START_TIME, 
     DBTBL_HA_SA,               
