@@ -1,0 +1,573 @@
+/*
+ * The proto buf definitions of all CDB_ID_XXX structures reside here
+ *
+ * We convert only those fields in the data structure of a CDB_ID_XXX that are updated by
+ * by the owning application. 
+ *
+ * The field or group of fields that are individually updated by the application is called "record"
+ * We create a proto-buf message for each record that are updated and one for remaining read-only fields
+ * that are not updated after the row is created.
+ *
+ * The notion of record is needed to pack and unpack proto-buf message representing a field/fields in a row 
+ * and is not tied to a specific table. Thus a record type can exist in more than one table as a column.
+ * For instance we can have record CdbMacAddress for MacAddress field which has same syntax in packing/unpacking
+ * proto-buf messages and can belong to multiple CDB tables 
+ * 
+ * The following naming convention that must be followed for proto-buf message corresponding to a record
+ *
+ * Cdb<RecordName>
+ * CDB_RECORDNAME is defined in the enum RECORDCdb in record_cdb.h 
+ *
+ * The definitons of CDB_ID_XXX tables are included db_cdb.h. Each table contains a list of columns.
+ * And each column has a RecordTypeName.
+ *
+ * Relevant header files
+ * db_group.h  -   defines DB groups (HA, CDB ..) 
+ * db_common.h -   defines DBTBLID using DB GROUP|DB TBL TYPE | DB INSTANCE ID
+ * The DBTBLID is used to determine REDIS database instance and hashkeys
+ * db_cdb.h    -   defines the DB TBL TYPE for each CBD_ID_XXX and for each DB TBL TYPE specifies 
+ *                 the column id for each column 
+ *
+ * record_group.h  - defines RECORD groups (HA, CDB, ..)
+ * record_common.h - defines RECORDID based on RECORD GROUP and RECORD TYPE
+ * record_cdb.h    - defines the RECORD TYPE for columns in CDB_ID_XXX tables 
+ * 
+ * record_cdb.proto - defines proto-buf messages for each CDB RECORD IDs
+ * 
+ * application_cdb_id_xxx.c - which read/writes to proto-buf message - data/len for each record 
+ * to/from the original cdb_id_xxx struct
+ * 
+ */
+
+message CdbVnfHaMonitorTarget /*skip*/
+{
+    required string target_name = 1;
+    optional bytes  remote_ip   = 2;
+    optional string vrf         = 3;
+    optional uint32 vrf_id      = 4;
+}
+
+message CdbVnfHaMonitorMember /*skip*/
+{
+    required string member_name   = 1;
+
+    /* a list of targets that at least one needs to be up */
+    repeated string target_name   = 2;
+}
+
+message CdbVnfHaMonitorGroup /*skip*/
+{
+    enum method_type {
+        UNKNOWN                 = 1;
+        PING                    = 2;
+        MAX                     = 3;
+    }
+
+    required string group_name           = 1;
+    optional method_type method          = 2;
+    optional uint32 ping_tx_interval     = 3;
+    optional uint32 ping_rx_timeout      = 4;
+
+    /*a list of configured target */
+    repeated CdbVnfHaMonitorTarget    monitor_target = 5;
+
+    /*a list of members that all need to be up */
+    repeated CdbVnfHaMonitorMember member  = 6;
+}
+
+message CdbVnfHaMonitorMemberGroup /*skip*/
+{
+    required string member_group_name    = 1;
+
+    /* a list of groups that at least one needs to be up */
+    repeated string group_name           = 2;
+}
+
+message CdbVnfHa
+{
+   optional int32  preferred_role = 1;
+   optional string self_interface = 2; 
+   optional string self_interface_ip_ver = 3;
+   optional bytes  local_ip = 4; //derived from self_interface, don't appear in CLI or "show run" 
+   optional uint32 local_port = 5;
+   optional bytes  remote_ip = 6;
+   optional uint32 remote_port = 7;
+   optional bytes  local_mgmt_ip = 8;
+   optional bytes  remote_mgmt_ip = 9;
+  
+   optional int32  remote_heartbeat_enable = 10;
+   optional int32  active_node_selection   = 11;
+   optional uint32 remote_heartbeat_timeout = 12;
+   optional uint32 task_down_max = 13;
+
+   optional uint32 local_poll_timeout = 14;
+   optional uint32 remote_mgmt_intf_reply_timeout = 15;
+   optional int32  redundancy_reboot  = 16;
+   required int32  logging_level = 17;
+
+    /*a list of configured groups */
+    repeated CdbVnfHaMonitorGroup        monitor_group         = 18;
+
+    /*a list of member groups that all need to be up */
+    repeated CdbVnfHaMonitorMemberGroup  monitor_member_group  = 19;
+
+    optional int32  standalone_reboot  = 20;
+}
+
+message CdbWagRadiusIntfOrigIf  /*skip*/
+{
+    required uint32 if_type      = 1;
+    required uint32 if_slot      = 2;
+    required uint32 if_id        = 3;
+    required bytes  if_addr_v4   = 4;
+    required bytes  if_addr_v6   = 5;
+    required uint32 if_vrf_id    = 6;
+}
+
+message CdbWagRadiusIntfPeer
+{
+    required uint32 enable       = 1;
+    required uint32 ip_addr_type = 2;
+    required bytes  ip_addr      = 3;
+    required string key          = 4;
+    optional uint32 intf_id      = 5;
+    optional uint32 peer_index   = 6;
+}
+
+message CdbWagRadiusIntf {
+    required int32  intf_id                 = 1;
+    required string intf_name               = 2;
+    optional uint32 retry_intv              = 3;
+    optional uint32 retries                 = 4;
+    optional uint32 dead_time               = 5;
+    optional CdbWagRadiusIntfOrigIf orig_if = 6;
+    repeated CdbWagRadiusIntfPeer peer      = 7;
+}
+
+message CdbWifissidEp
+{
+    required bytes  ip_addr      = 1;
+    required uint32 vlan_id      = 2;
+    required uint32 vrf_id       = 3;
+    optional uint32 if_addr_type = 4;
+    optional uint32 if_type      = 5;
+    optional uint32 if_slot      = 6;
+    optional uint32 if_id        = 7;
+}
+
+message CdbWifissid {
+    required string name                     = 1;
+    required uint32 index                    = 2;
+    optional int32  admin                    = 3;
+    optional uint32 session_timeout          = 4;
+    optional uint32 idle_timeout             = 5;
+    optional string pre_auth_policy          = 6;
+    optional uint32 pre_auth_policy_id       = 7;
+    optional string post_auth_policy         = 8;
+    optional uint32 post_auth_policy_id      = 9;
+    optional string cgnat_profile            = 10;
+    optional uint32 cgnat_profile_id         = 11;
+    optional string radius_acct_profile      = 12;
+    optional uint32 radius_acct_profile_id   = 13;
+    optional string radius_authen_profile    = 14;
+    optional uint32 radius_authen_profile_id = 15;
+    optional string radius_author_profile    = 16;
+    optional uint32 radius_author_profile_id = 17;
+    optional uint32 dhcp_intf_id             = 18;
+    optional string dhcp_intf_name           = 19;
+    repeated CdbWifissidEp ssid_ep           = 20;
+    optional int32  type                     = 21;
+    optional uint32  service_reject_msg      = 22;
+    optional uint32  upn_hair_pinning        = 23;
+    optional uint32 tcp_mss_adj              = 24;
+}
+
+message CdbWifiAuthorProfile {
+    required uint32 profile_id   = 1;
+    required string profile_name = 2;
+    optional uint32 radius_intf  = 3;
+}
+
+message CdbWifiAuthenProfile {
+    required uint32 profile_id   = 1;
+    required string profile_name = 2;
+    optional uint32 radius_intf  = 3;
+    optional string dictionary   = 4;
+}
+
+message CdbWifiAcctProfile {
+    required uint32 profile_id   = 1;
+    required string profile_name = 2;
+    optional uint32 radius_intf  = 3;
+    optional string dictionary   = 4;
+    optional uint32 interval     = 5;
+}
+
+message CdbWifiKeyIdMap
+{
+    required string name         = 1;
+    required uint32 id           = 2;
+}
+
+message CdbWifiGlobalKeyIdMap {
+    enum TableType {
+        SSID                     = 1;
+        POLICY                   = 2;
+        AUTHOR_PROF              = 3;
+        AUTHEN_PROF              = 4;
+        ACCT_PROF                = 5;
+        RADIUS_INTF              = 6;
+        LOGIC_INTF               = 7;
+        VRF                      = 8;
+        NUM_OF_TYPES             = 9;  /*"new types should be added before NUM_OF_TYPES"*/
+    }      
+    required TableType map_id    = 1;   /* map_id is the key*/
+    required uint32 last_id      = 2;
+    required uint32 total_num    = 3;
+    repeated CdbWifiKeyIdMap map = 4;
+}
+
+//Key is index
+message CdbWifiKeyIdMapSsidName {
+    required string name    = 1;
+}
+
+//Key is name
+message CdbWifiKeyIdMapSsidId {
+    required int32 index   = 1;
+}
+
+message CdbWifiKeyIdMapIntfName {
+    required string name    = 1;
+}
+
+message CdbWifiKeyIdMapIntfId {
+    required int32 index   = 1;
+}
+
+
+//INIT_QAM_IP_QUOTA
+message CdbCgnatInitQamIpQuota
+{
+    repeated uint32 slot = 1;
+}
+
+message CdbCgnatProfileKey
+{
+    required string name = 1;
+    required uint32   id = 2;
+}
+
+message CdbCgnatIpPoolKey
+{
+    required string name = 1;
+    required uint32   id = 2;
+}
+
+message CdbCgnatGlobalConfig
+{
+     required CdbCgnatInitQamIpQuota init_qam_ip_quota = 1;
+}
+message CdbCgnatTypeInt
+{
+    
+required int32 value= 1;
+}
+
+message CdbCgnatGlobalProfile
+{
+    optional uint32                    num_profile = 1;
+    repeated  CdbCgnatProfileKey      p_profile_key = 2;//CGNAT_FROFILE_MAX_NUM
+    optional uint32                    last_profile_id = 3; 
+    
+}
+
+message CdbCgnatGlobalIpPool
+{
+    repeated CdbCgnatIpPoolKey       ippool_key_p = 1;
+    optional uint32                    num_ippool = 2;
+    optional  uint32                    last_ippool_id = 3; 
+}
+
+message CdbCgnatSyslogServer
+{
+    required uint32 enable_flag = 1;
+    required uint32 vrf = 2;
+    required uint32 src_vrf = 3;
+    required uint32 port = 4;
+    required uint32 src_port = 5;
+    required uint32 v4_addr = 6;
+    required uint32 src_v4_addr = 7;
+}
+
+message CdbCgnatSyslogServers
+{
+    repeated CdbCgnatSyslogServer syslog_server = 1;
+}
+
+message CdbCgnatGlobal {
+    optional CdbCgnatGlobalProfile profile = 1;
+    optional CdbCgnatGlobalIpPool ip_pool = 2;
+    optional CdbCgnatSyslogServers syslog_servers = 3;
+    //optional uint32                    active_slot_num = 7;  /*not defined*/
+    //repeated  CdbCgnatTypeInt          active_slot_map = 8;
+    //optional CdbCgnatGlobalConfig    global_cfg = 9;
+}
+
+message CdbTestArray
+{
+    repeated CdbCgnatTypeInt p_array = 1;
+}
+
+message CdbTestBasic
+{
+    required  int32 a = 2;
+    optional int32 b = 3;
+}
+
+message CdbCgnatTest {
+   //repeated CdbCgnatTypeInt p_array = 1;
+   optional CdbTestArray array= 1;
+   optional CdbTestBasic basic_val = 2;
+}
+
+message CdbCgnatTcpSessionTimeout 
+{
+    optional uint32 sync_timeout = 1;
+    optional uint32 ftp_order_timeout = 2;
+    optional uint32 timeout_wait = 3;
+    optional uint32 refresh_enable = 4;
+}
+
+message CdbCgnatProfileDataSsid
+{
+    repeated CdbCgnatTypeInt ssid_index = 1;//CGNAT_MAX_SSID_BIND_PER_PROFILE
+}
+message CdbCgnatProfileDataBasic
+{
+         enum CgnatProfileMappingMode {
+         N_TO_ONE = 0;
+         ONE_TO_ONE = 1;
+         PORT_PRESERVATION = 2;  
+         NFE_CGNAT_FROFILE_MAPPING_MODE_MAX = 3;
+     }
+     enum CgnatProfileAddrSelectMode {
+         CGNAT_ADDR_SEL_ROUND_ROBIN = 0;
+         CGNAT_ADDR_SEL_LEAST_USED = 1;
+         CGNAT_ADDR_SEL_LEAST_USERS = 2;
+         CGNAT_ADDR_SEL_RANDOM = 3;
+         CGNAT_ADDR_SEL_MAX = 4;
+     }
+     enum CgnatProfileFilterSelectMode {
+         CGNAT_FILTER_SEL_EP_INDEPENDENT = 0;
+         CGNAT_FILTER_SEL_ADDR_DEPENDENT = 1;
+         CGNAT_FILTER_SEL_MAX = 2;
+     }
+    // required CgnatCmdType cmd_type  = 1;
+     required string  profile_name = 2;
+     optional uint32 enable_flag    = 3;
+     optional string ip_pool_name = 4;
+     required uint32 ip_pool_index = 5;//required
+     optional CgnatProfileMappingMode mapping_mode = 6;
+     optional CgnatProfileAddrSelectMode ext_addr_select_mode = 7;
+     optional uint32  additional_port_range = 8;
+     optional CgnatProfileFilterSelectMode nat_filter_selection = 9;
+     optional uint32 tcp_ext_init_connection = 10;
+     optional uint32 udp_timeout = 11;
+     optional uint32 tcp_timeout = 12;
+     optional CdbCgnatTcpSessionTimeout tcp_sess_fsm = 13;
+     optional uint32 pptp_enable = 14;
+
+}
+message CdbCgnatProfileData {
+    optional CdbCgnatProfileDataBasic basic   = 1;
+    optional CdbCgnatProfileDataSsid ssid = 2;//ssid bind info, not use.when delete a profile, walk ssid db .
+    //repeated CdbCgnatTypeInt  qam_slot_ip_quota_p = 14 ;   //uint16_t           CGNAT_SLOT_MAX_NUM
+}
+
+message CdbCgnatIpV4Range
+{
+    required uint32  start_v4_addr = 1;
+    required uint32  end_v4_addr = 2;
+    required uint32  prefix_len = 3;
+    required uint32 network = 4; //caculator network based on ip-addr-range
+}
+
+message CdbCgnatIpV6Range
+{
+    
+}
+
+//CdbCgnatPublicIpPool
+message CdbCgnatIpPoolDataPool
+{
+    optional uint32 enable_flag = 1;
+    optional uint32 port_range_size = 2;
+    optional uint32 ip_range_size = 3;
+    optional uint32 port_range_number = 4;
+    optional uint32 start_port = 5;
+    optional uint32 end_port = 6;
+    optional string  ip_pool_name = 7;//CGNAT_NAME_MAX_LEN
+    repeated CdbCgnatIpV4Range ipv4_range =8 ; //CGNAT_PUBLIC_IPV4_POOL_RANGE_MAX_NUM
+    repeated CdbCgnatIpV6Range ipv6_range = 9;//
+    optional string vrf_name = 10;
+    required uint32 vrf_id = 11;
+    optional uint32 total_addr_num = 12; //total ip address num that has been configured
+    required uint32 oto_map_enable = 13;
+}
+
+//db_cgnat_ippool_slot_data_t
+//CdbCgnatIpPoolRunningData
+message CdbCgnatIpPoolDataRunning
+{
+    optional uint32 enable_flag = 1;    
+    optional uint32 active_flag = 2;
+    optional uint32 active_slot_num = 3;   
+    optional uint32 active_add_num= 4;   
+    optional uint32 total_addr_num= 5;   
+    optional uint32 current_ip_array_index= 6;   
+    optional uint32 next_ip_index= 7;   
+    optional uint32 next_ip_range_index= 8;   
+    optional uint32 leftover_ip_num= 9;   
+   // repeated db_cgnat_ippool_slot_data_t slot_data= 3;   //[CGNAT_SLOT_MAX_NUM];
+    optional uint32  vrf_id= 10;  
+}
+
+message CdbCgnatIpPoolDataProfile
+{
+    repeated CdbCgnatTypeInt profile_id = 3 ; //CGNAT_MAX_PROFILE_BIND_PER_IPPOOL
+}
+
+message CdbCgnatIpPoolData {
+
+    optional CdbCgnatIpPoolDataPool data = 1;//pool data
+    optional CdbCgnatIpPoolDataRunning running_data = 2;//Currently, NOt use 
+    optional CdbCgnatIpPoolDataProfile profile = 3;//profile-binding, no need to use it.when del, walk the profile db.
+}
+
+//message CdbCgnatUeObjBackUp 
+//{
+    //required bytes ip_addr = 1;
+    //required bytes mac_addr = 2;
+    //required int32 vrf_id = 3; 
+    //required int32 profile_index = 4;
+    //required uint32 task_id = 5;
+//}
+
+//message CdbCgnatSessionObjBackUp 
+//{
+//    
+//}
+
+//message CdbCgnatUeBackUp {
+    //optional CdbCgnatUeObjBackUp ue_obj;
+    //optional CdbCgnatSessionObjBackUp session_obj; //TBD
+//}
+
+message CdbWifiSubnet
+{
+    required int32 subnet_id            = 1;
+    optional int32 prefix_len           = 2;
+    optional bytes ip_addr              = 3;
+}
+
+message CdbWifiLogicIntf {
+    required uint32 intf_id             = 1;
+    required string name                = 2;
+    optional bytes helper               = 3;
+    optional string vrf_name            = 4;
+    optional int32 vrf_id               = 5;
+    optional bytes v6_helper            = 6;
+    repeated CdbWifiSubnet subnet       = 7;
+}
+
+message CdbDhcpmgrGlobalConfig {
+    required int32 id					= 1;
+    optional int32 lease_time           = 2;
+    optional bytes primary_dns		    = 3; 
+    optional bytes secondary_dns		= 4; 
+    optional string option 				= 5; 
+    optional string host_name           = 6;
+    optional string domain		        = 7;
+    optional uint32 log_level           = 8;
+}
+
+message CdbWifiSvcpolicyRule
+{
+    required uint32  rule_id           = 1;
+    optional uint32  proto             = 2;
+    optional uint32  direction         = 3;
+    optional uint32  action            = 4;
+    optional uint32  mask_len          = 5;
+    optional uint32  dst_port          = 6;
+    optional bytes   dst_ipaddr        = 7;
+    optional string  redirect_url      = 8;
+    optional uint32  redirect_force    = 9;
+    optional uint32  dst_iptype        = 10;
+}
+
+message CdbWifiSvcpolicy {
+    required string policy_name               = 1;
+    required uint32 policy_id                 = 2;
+    optional uint32 pre_auth_limit            = 3;
+    optional uint32 auth_us_limit             = 4;
+    optional uint32 auth_ds_limit             = 5;
+    repeated CdbWifiSvcpolicyRule policy_rule = 6;
+}
+
+message CdbWifisvcGlobalConfig {
+    // wifi service
+    required bool    svc_enabled	      = 1;
+    required bool    cgnat_enabled	      = 2;
+    required bool    dhcp_enabled	      = 3;
+    required bool    radius_enabled	      = 4;
+    required int32   ssid_next_key_id     = 5;
+    required int32   intf_next_key_id     = 6;
+}
+
+message CdbWifiBindRecord {
+    // Add new bind type at bottom
+    enum BindType {
+        LOGIC_INTF_TO_SSID  = 1;
+        POLICY_TO_SSID      = 2;
+        AUTHEN_TO_SSID      = 3;
+        AUTHOR_TO_SSID      = 4;
+        ACCT_TO_SSID        = 5;
+        CGNAT_TO_SSID       = 6;
+        RADIUS_INTF_TO_AUTHEN   = 7;
+        RADIUS_INTF_TO_AUTHOR   = 8;
+        RADIUS_INTF_TO_ACCT     = 9;
+    }
+    required int32 counter = 1;
+}
+message CdbWifidbgGlobalConfig {
+
+    // wifi logging
+    enum LogArea {
+        FSM          = 0;
+        RADIUS       = 1;
+        DHCP         = 2;
+        POLICY       = 3;
+        REDIRECT     = 4;
+        CGNAT        = 5;
+        WAGMGR       = 6;
+        WAGMGRDB     = 7;
+    }
+    enum LogLvl {
+        EMERGENCY     = 0;
+        ALERT         = 1;
+        CRITICAL      = 2;
+        ERROR         = 3;
+        WARNING       = 4;
+        NOTIFICATION  = 5;
+        INFOMATIONAL  = 6;
+        DEBUGGING     = 7;
+    }
+    optional bytes    log_ap_mac_addr  = 1;
+    optional bytes    log_ap_ip_addr   = 2;
+    optional bytes    log_ue_mac_addr  = 3;
+    optional bytes    log_ue_ip_addr   = 4;
+    optional LogLvl   log_level        = 5;
+    repeated LogArea  log_area         = 6;
+}
+

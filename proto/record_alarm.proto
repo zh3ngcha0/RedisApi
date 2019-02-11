@@ -1,0 +1,16 @@
+message AlarmIndex
+{
+   required uint32  alarm_index   = 1;
+}
+
+message AlarmLevel
+{
+   required uint32  alarm_level   = 1;
+}
+
+message AlarmText
+{
+   required string  alarm_text    = 1;
+   optional uint32  log_module    = 2;
+}
+

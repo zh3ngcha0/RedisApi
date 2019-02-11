@@ -1,0 +1,859 @@
+
+message HaIpsecStartTime
+{
+   optional bytes time = 1;
+   optional uint64 cycles = 2;
+}
+
+message HaIkePeer  
+{
+    required uint32  dwId             = 1;
+    optional bytes   dwPeerAddr       = 2;           /* MOC_IP_ADDRESS_S */
+    optional uint32  wPeerPort        = 3;
+    optional bytes   dwPeerInternalAddr = 4;
+    optional uint32  dwPeerInternalPrefixLen = 5;
+}
+message HaIkeInfo         /* cipsec_ha_ike_sa_simp_t */
+{
+    optional uint32  dwTimeStart      = 1;    /* system uptime (in ms) at initial exchange */
+    optional uint32  dwTimeCreated    = 2;  /* system uptime (in ms) at IKE_SA establishment */
+
+    required uint32  dwId             = 3;           /* internal ID; intact when deleted */
+    optional int32   wLoc             = 4;            /* locator */
+
+    optional int32   serviceInstance  = 5;
+
+    optional bytes   poCky_I          = 6; /* poCky_I[IKE_COOKIE_SIZE];  initiator cookie poCky_I[IKE_COOKIE_SIZE] */
+    optional bytes   poCky_R          = 7; /* poCky_R[IKE_COOKIE_SIZE];  responder cookie */
+
+    optional bytes   dwHostAddr       = 8;
+    optional uint32  wHostPort        = 9;
+    optional uint32  oVrfId           = 10;
+
+    optional fixed32 dwDpdSecs        = 11;
+
+    /* lifetime */
+    optional uint32  dwExpSecs        = 12;
+    optional uint32  dwExpKBytes      = 13;
+
+    /* crypto suites */
+    optional uint32  wDhGrp           = 14;         /* [v2] */
+    //unsigned char       xDhContext[sizeof(struct diffieHellmanContext)];
+
+    //struct IKE_hashSuiteInfo    xHashSuite;
+    optional uint32  wHashTfmId       = 15;         /* [v2] PRF_ transform ID */
+    //struct IKE_macSuiteInfo     xMacSuite;
+    optional uint32  wAuthTfmId       = 16;         /* AUTH_ transform ID */
+    optional uint32  wAuthKeyLen      = 17;    /* [v2] */
+
+    optional uint32  wEncrTfmId       = 18;
+    optional uint32  wEncrKeyLen      = 19;
+
+    optional uint32  oTfmNo           = 20; /* [v1] */
+    optional uint32  oPpsNo           = 21; /* [v2] */
+
+    //struct IKE_certDescr *pCertChain;   /* host certificate chain */
+    //int  certChainLen;
+
+    optional uint32  dwTimeAuthed     = 22;   /* system uptime (in ms) at IKE_AUTH establishment */
+    optional uint32  dwExpAuthSecs    = 23;  /* rfc4478 Repeated Auth. */
+    /* SK_d | SK_ai | SK_ar | SK_ei | SK_er | SK_pi | SK_pr */
+    optional bytes   SK               = 24;  /* SK[IKE_HASH_MAX*3 + IKE_AUTHKEY_MAX*2 + IKE_ENCRKEY_MAX*2]; keying material */
+
+    optional uint32 dwSuccrId         = 25;         /* successor*/ ;
+    optional uint32 dwPrdcrId         = 26;         /* predecessor*/ 
+
+    optional HaIkeEpdgCtx  epdg_ctx = 27;  /* cipsec_ha_epdg_ctx_t  edpg_ctx; */
+}
+
+message HaIkeEpdgCtx {
+    optional uint32 epdgTeid = 1;
+}
+
+message HaIkeStat {     /*  cipsec_ha_ike_sa_stat_t */
+    optional uint32  flags           = 1;
+    optional uint32  flags2          = 2; 
+    optional uint32  natt_flags      = 3;
+    optional uint32  oState          = 4;         /* [v1] phase 1 exchange state (see "ike_state.h") */
+
+    optional uint32  dwTimeStamp     = 5; /* system uptime (in ms) at most recent outbound (phase 1),
+                                     inbound (phase 2), or inbound CHILD [v2] exchange */
+    optional uint32  dwTimeStampNATTKeepAlive     = 6; 
+    optional uint32  dwCurPktsIb     = 7;
+    optional uint32  dwCurKBytesIb   = 8;
+    optional uint32  dwCurBytesIb    = 9;     /* count of bytes < 1k in addition to dwCurKBytes */
+
+    optional uint32  dwCurPktsOb     = 10;
+    optional uint32  dwCurKBytesOb   = 11;
+    optional uint32  dwCurBytesOb    = 12;     /* count of bytes < 1k in addition to dwCurKBytes */
+
+    optional uint32  dwMsgId_I       = 13;
+    optional uint32  dwMsgId_R       = 14;
+    optional uint32  dwWndLen_I      = 15;
+    optional uint32  dwWndLen_R      = 16;
+    optional uint32  dwWndIdx_I      = 17;
+    optional uint32  dwWndIdx_R      = 18;
+
+    optional uint32  merror          = 19;     /* status code */
+    optional uint32  wMsgType        = 20;   /* [v2] Notify error code (initiator only)
+                           valid if (status code == ERR_IKE_NOTIFY_PAYLOAD) */
+
+    // cumulative stats across rekeys
+    optional sint32  cum_created     = 21;  /* system uptime (in ms) at SA establishment */
+    optional uint32  cum_rekeys      = 22;     /* number of rekeys*/
+
+    optional uint64  cum_pkts_ib     = 23;
+    optional uint64  cum_kbytes_ib   = 24;
+    optional uint64  cum_bytes_ib    = 25;     /* count of bytes < 1k in addition to dwCurKBytes */
+    optional uint64  cum_pkts_ob     = 26;
+    optional uint64  cum_kbytes_ob   = 27;
+    optional uint64  cum_bytes_ob    = 28;     /* count of bytes < 1k in addition to dwCurKBytes */
+
+    optional uint32  dwMsgIdInc      = 29;
+}
+
+message HaChildInfo {     /* ExtIpSecKeyEx_t */
+    required HaChildKeyEx    key      = 1;      
+    optional bytes           authKey  = 2;      /* authKey[128];    Key storage */
+    optional bytes           encrKey = 3;       /*  encrKey[128]; */
+}
+
+
+message HaChildKeyEx {            /* ipsecKeyEx */
+    optional uint32  flags          = 1;              /* direction, initiator, replay, etc. */
+
+    optional uint32  oProtocol      = 2;          /* IPPROTO_AH or IPPROTO_ESP */
+    optional uint32  vrfId          = 3;              /* VRF used for packet I/O (to outside) */
+    optional uint32  vrfIdInside    = 4;        /* VRF used for packet I/O (to inside) */
+    optional uint32  dwSpi          = 5;              /* SPI to use */
+    required uint32  dwId           = 6;               /* Internal ID, for local SA, the same as dwSpi*/
+
+    optional bytes  dwDestAddr      = 7;   /* MOC_IP_ADDRESS_S dwDestAddr; destination IP address */
+    optional bytes  dwSrcAddr       = 8;   /* MOC_IP_ADDRESS_S dwSrcAddr;  source IP address */
+
+    optional uint32  cookie         = 9;             /* developer customizable cookie (e.g. VLan id) or PF_KEY reqid */
+
+    optional uint32 oUdpEncEnum     = 10;
+    optional uint32  wUdpEncPort    = 11;        /* peer's UDP-encapsulation port number; 0=no UDP-encap. */
+    repeated uint32  wDestPort      = 12;        /* wDestPort[CIPSEC_MAX_TS] wDestPortEnd[CIPSEC_MAX_TS]; destination port range; 0=any or N/A */
+    repeated uint32  wDestPortEnd   = 13;
+    repeated uint32  wSrcPort       = 14;        /* wSrcPort[CIPSEC_MAX_TS], wSrcPortEnd[CIPSEC_MAX_TS];  source port range; 0=any or N/A */
+    repeated uint32  wSrcPortEnd    = 15;
+    repeated uint32  oUlp           = 16;        /* oUlp[2][CIPSEC_MAX_TS];  upper layer protocol; 0=any o/w, see "ipsec_protos_casa.h" */
+    optional uint32  tsNum          = 17;        /* tsNum[2]; number of traffic selectors in both directions */
+
+    optional uint32   oMode         = 18;       /* IPSEC_MODE_TRANSPORT or IPSEC_MODE_TUNNEL */
+
+    
+    repeated bytes  dwDestIP        = 19;       /* MOC_IP_ADDRESS_S dwDestIP[CIPSEC_MAX_TS], dwDestIPEnd[CIPSEC_MAX_TS];  private destination IP range; tunnel mode only */ 
+    repeated bytes  dwDestIPEnd     = 20;
+    repeated bytes  dwSrcIP         = 21;       /* MOC_IP_ADDRESS_S dwSrcIP[CIPSEC_MAX_TS], dwSrcIPEnd[CIPSEC_MAX_TS];  private source IP range; tunnel mode only */
+    repeated bytes  dwSrcIPEnd      = 22;
+
+    optional uint32   oAuthAlgo     = 23;        /* authentication algorithm ID; 0=none or N/A, see "ipsec_defs.h" */
+    optional bytes   poAuthKey      = 24;        /* ubyte*  poAuthKey;  authentication key */
+    optional uint32  wAuthKeyLen    = 25;        /* authentication key length (in bytes) */
+
+    optional uint32   oEncrAlgo     = 26;        /* encryption algorithm ID; 0=none or N/A, see "ipsec_defs.h" */
+    optional bytes   poEncrKey      = 27;        /* ubyte*  poEncrKey; encryption key */
+    optional uint32  wEncrKeyLen    = 28;        /* encryption key length (in bytes) */
+    optional uint32   oAeadIcvLen   = 29;        /* tag size (in bytes) for ESP Aead algo; e.g. 16, 12, 8, or 0=N/A */
+
+    optional uint32  dwExpSecs      = 30;         /* expire after so many seconds elasped */
+    optional uint32  dwExpKBytes    = 31;        /* expire after so many kbytes passed */
+    /* sbyte   poMapName[CIPSEC_NAME_MAX_LEN]; */
+
+
+
+
+
+    optional uint32  dwIkeSaId      = 32;          /* parent IKE_SA's internal ID */
+    optional bytes   poCky          = 33;          /* ubyte   poCky_ib[IKE_COOKIE_SIZE]; parent's inbound cookie */
+    optional sint32  ikeSaLoc       = 34;           /* parent IKE_SA's locator */
+
+    optional uint32  dwTimeStart    = 35;        /* time elapsed (in ms) since quick mode start */
+    optional uint32  dwSaEstablished = 36;    /* system uptime (in ms) when this SA was established,
+                                   this is the point of time when the IPsec SA pairs were created in crypto_cb,
+                                   a little later than the IKE SA's */
+    optional uint32 dwLastRekeyAttempt = 37;
+    optional uint32 dwIdRekeyPrev   = 38;
+    optional bytes dwPeerAddrRemote = 39;  /* MOC_IP_ADDRESS_S  dwPeerAddrRemote; */
+
+    /*service-specific data (e.g. application key used to link SA to app during recovery), transparent to IPSEC */
+    optional uint32  epdg_handle    = 40;
+}
+
+message HaChildStat {
+    optional uint32   dwSeqNbrInc   = 1;
+    optional uint32   wSaCurBytes   = 2;      /* current count of bytes < 1k */
+    optional uint32   dwSaCurKBytes = 3;      /* current count of kbytes */
+    optional uint32   dwSaExpKBytes = 4;      /* expire after so many kbytes processed */
+
+    optional uint32   dwSaTotPackets= 5;     /* number of packets gone through this SA */
+    optional uint32   dwSaCurPackets= 6;     /* number of packets processed */
+
+    optional uint32   dwSaLastUsed  = 7;       /* system uptime (in ms) when this SA was last used */
+
+    optional uint32   dwSaFirstUsed = 8;      /* system uptime (in ms) when
+                                       [outbound] first used after its mirrored inbound SA was last used OR
+                                       [inbound] IKE was last informed of this SA's connection or deletion
+                                     */
+    optional uint32   dwSaLastRekey = 9;      /* system uptime (in ms) at
+                                       [outbound] last rekeying attempt OR [inbound] deletion
+                                     */
+    optional uint32   dwSeqNbr      = 10;           /* sequence number (outbound) or starting seq. # of the replay window (inbound) */
+
+    optional uint32   dwIdRekeyPrev = 11;           /* predecessor*/ 
+    optional uint32   dwIdRekeyNext = 12;           /* successor*/ 
+}
+
+message HaSwmDiam {
+    optional uint32   diamAppHhId         = 1;
+    optional uint32   diamAppEteId        = 2;
+    optional uint32   SessionIdHigh32bits = 3;
+}
+
+/***** RsrcMgr HA: ******************************************************************/
+message HaIppool  
+{
+    required bytes   allocatedIpAddr       = 1;
+    optional uint32  allocatedIpPrefixLen  = 2;  
+    optional uint32  ippoolVrfId           = 3;  /*cfg has it too, keep it for code consistency */
+    optional bytes   requesterPeerIpAddr   = 4;
+    optional uint32  requesterPeerPort     = 5;
+    optional uint32  requesterSaId         = 6;
+}
+
+/***** ePDG Manager HA **************************************************************/
+message HaEpdgSessionCommon
+{
+    required uint32              lbi                  = 1;
+
+    required uint32              ratType              = 3;
+    required uint32              selMode              = 4;
+    required bytes               servingNetwork       = 5;
+    required uint32              pdnType              = 6;
+    required bytes               paa                  = 7;
+    required bytes               dns_ip               = 8;
+
+    required bytes               apn                  = 9;
+    required uint32              apn_cfg_index        = 10;
+
+    required bytes               indication           = 13;
+    required uint32              pti                  = 14;
+
+    required uint32              session_id           = 15;
+
+    required uint32              state                = 16;
+    required uint32              sub_state            = 17;
+    required uint32              sub_state_flag       = 18;
+
+    required bytes               s2bTunnel            = 19;
+
+    required uint32              ipseccp_sit          = 20;
+    required uint32              ipseccpmgr_handle    = 21;
+}
+
+message HaEpdgSessionUe
+{
+    required bytes               imsi                 = 1;
+    required bytes               msIsdn               = 2;
+    required bytes               mei                  = 3;
+    required bytes               ue_uli               = 4;
+    required uint32              apn_restriction      = 5;
+    required bytes               time_zone            = 6;
+
+    required bytes               trace_ctrl           = 7;
+}
+
+message HaEpdgSessionApnAmbr
+{
+    required uint32              max_uplink           = 1;
+    required uint32              max_downlink         = 2;
+}
+
+message HaEpdgBearerCommon
+{
+    required bool                is_valid             = 1;
+    required bool                is_default           = 2;
+    required bool                is_gbr               = 3;
+    required bool                gating_status        = 4;
+
+    required uint32              state_prv            = 5;
+    required uint32              state                = 6;
+
+    required uint32              lbi                  = 7;
+    required uint32              ebi                  = 8;
+
+    required bytes               bearer_teid          = 9;
+
+    required bytes               s2b_bearer           = 10;
+
+    required uint32              teid_c               = 11;
+    required uint32              bearer_id            = 12;
+}
+
+message HaEpdgBearerQos
+{
+    optional bytes               qos                  = 1;
+    optional bytes               bearer_tft           = 2;
+    optional bytes               tft_id_flags         = 3;
+}
+
+/***** HenbGW***************************************************************************/
+/***** HenbGW S1mmemgr******************************************************************/
+/***** HenbGW S1mmemgr Instance_Data****************************************************/
+message HaS1mmeInstCfg  
+{
+    optional uint32  application_id        = 1;  
+    optional uint32  mic_mm_gid_slot       = 2;  /*cfg has it too, keep it for code consistency */
+    optional uint32  x2_application_id     = 3;
+    
+    optional uint32  mic_mm_sctp_x2_listener  = 4;
+}
+
+/***** HenbGW S1mmemgr Lenb_Data****************************************************/
+message HaS1mmeLenb  
+{
+	required uint32  lenb_index            = 1;
+	required uint32  lenb_type             = 2;
+	required uint32  lenb_vrf_id           = 3;
+	required uint32  lenb_id               = 4;
+	required bytes   lenb_name             = 5;
+	required bytes   lenb_ipaddr           = 6;
+}
+
+/***** HenbGW S1mmemgr MMECB_Data****************************************************/
+message HaS1mmeMmeCb
+{
+	required uint32  mme_index             = 1;
+	required uint32  association_id        = 2;
+	required uint32  mme_sctp_port         = 3;
+	required uint32  association_state     = 4;
+	required uint32  s1ap_setup_state      = 5;
+	required uint32  mme_relative_capacity = 6;
+
+	required bool    relative_mmecapacity_present = 7;
+	required bool    mmename_present              = 8;
+	required bool    served_gummeis_present       = 9;
+	
+
+	required uint64  mme_sctp_stchg_ts            = 10;
+	required uint64  mme_s1ap_stchg_ts            = 11;
+	
+	required bytes   mme_name                     = 12;
+	required bytes   mme_ip                       = 13;
+	required bytes   tailist_name                 = 14;
+}
+
+/***** HenbGW S1mmemgr MME_Plmn_Data****************************************************/
+message HaS1mmeMmePlmn  
+{
+	required uint32  mme_index             = 1;
+	required uint32  gummeis_item_index    = 2;
+	required uint32  gummeis_item_count    = 3;
+	required uint32  plmnidentity_count    = 4;
+	
+	required bytes   s1ap_plmnidentity     = 5;
+}
+
+/***** HenbGW S1mmemgr MME_MMECS_Data****************************************************/
+message HaS1mmeMmeMmecs  
+{
+	required uint32  mme_index             = 1;
+	required uint32  gummeis_item_index    = 2;
+	required uint32  gummeis_item_count    = 3;
+	required uint32  mme_code_count        = 4;
+	
+	required bytes   s1ap_mme_code         = 5;
+}
+
+/***** HenbGW S1mmemgr MME_GroupId_Data****************************************************/
+message HaS1mmeMmeGroupid
+{
+	required uint32  mme_index             = 1;
+	required uint32  gummeis_item_index    = 2;
+	required uint32  gummeis_item_count    = 3;
+	required uint32  mme_group_id_count    = 4;
+
+	required bytes   s1ap_mme_group_id     = 5;
+}
+
+/***** HenbGW S1mmemgr_SuptTai_Data****************************************************/
+message HaS1mmeSuptdTai
+{
+	required uint32  lenb_index             = 1;
+	required bytes   henbmgr_gid            = 2;
+	required bytes   tai                    = 3;
+	required bool    allowed                = 4;
+}
+
+/***** HenbGW S1mmemgr_HenbCb_Data****************************************************/
+message HaS1mmeHenbCb
+{
+	required uint32  henb_s1ap_id          = 1;
+	required uint32  lenb_index            = 2;
+	required bytes   henb_global_enb_id    = 3;
+	required bytes   henb_name             = 4;
+}
+
+/***** HenbGW S1mmemgr_X2_HenbCb_Data****************************************************/
+message HaS1mmeX2Henb
+{
+	required bytes   global_enb_id         = 1;
+	required bytes   henb_ip               = 2;
+	required uint32  henb_port             = 3;
+	required uint32  henb_s1ap_id          = 4;
+	required uint32  henb_x2ap_id          = 5;
+	required uint32  lenb_index            = 6;
+	required bool    sctp_up               = 7;
+	required bool    x2ap_up               = 8;
+	required bool    have_tnl              = 9;
+
+	required bytes   trnspt_layer_add      = 10;
+	required uint32  nbr_enbs_count        = 11;
+	required bytes   nbr_enbs              = 12;
+}
+
+/***** HenbGW S1mmemgr_X2_EnbCb_Data****************************************************/
+message HaS1mmeX2Enb
+{
+	required bytes   global_enb_id         = 1;
+	required bytes   rmt_ip                = 2;
+	required uint32  rmt_port              = 3;
+	required uint32  assoc_id              = 4;
+
+	
+	required bool    flow_up               = 5;
+	required bool    sctp_up               = 6;
+	required bool    x2ap_up               = 7;
+
+	required bool    have_geid             = 8;
+	required bool    have_ip               = 9;
+	required bool    have_tnl              = 10;	
+
+	required bytes   trnspt_layer_add      = 11;
+	required uint32  nbr_henbs_count       = 12;
+	required bytes   nbr_henbs             = 13;
+}
+
+/***** HenbGW S1mmemgr_X2_ServedCell_Data****************************************************/
+message HaS1mmeX2ServedCell
+{
+	required bytes served_cell       = 1;
+}
+
+/***** HenbGW Ltegw Sctp HA Data*************************************************************/
+/***** HenbGW Ltegw Sctp Glb Data************************************************************/
+message HaS1mmeSctpRedGlbData
+{
+	required uint32 pmtu_timer_rem_time = 1;
+	required uint32 max_ep              = 2;
+	required uint32 max_appl            = 3;
+	required uint32 max_assoc           = 4;
+	required uint32 min_tx_buffers           = 5;
+	required uint32 med_tx_buffers           = 6;
+	required uint32 max_tx_buffers           = 7;
+	required uint32 min_rx_buffers           = 8;
+	
+	required uint32 med_rx_buffers           = 9;
+	required uint32 max_rx_buffers           = 10;
+	required uint32 min_reserve_buffers      = 11;
+	required uint32 med_reserve_buffers      = 12;
+	required uint32 max_reserve_buffers      = 13;
+	required uint32 max_streams_per_assoc    = 14;
+
+	required uint32 init_in_streams          = 15;
+	required uint32 init_out_streams         = 16;
+	required uint32 standard_udp_port        = 17;
+
+	required bytes  old_mac_key              = 18;
+	required bytes  current_mac_key          = 19;
+	
+	repeated uint32 active_appl_list         = 20;
+	repeated bytes  addr_list                = 21;
+	
+	optional bytes  sctp_def_prot_params     = 22;
+	optional bytes  trx_cong_reg_def         = 23;
+	optional bytes  rcv_cong_reg_def         = 24;
+	//Listener
+	repeated uint32 listener_ep_id           = 25; // number of listeners
+}
+
+message HaS1mmeSctpRedGlbEp
+{
+	optional uint32  num_active_ep      = 1;
+	optional uint32  num_in_use_ep      = 2;
+	optional uint32  last_allocated_ep  = 3;
+	repeated uint32  active_ep_list     = 4;
+}
+
+message HaS1mmeSctpRedGlbPmtu
+{
+	repeated bytes red_pmtu_snapshot_db = 1;
+}
+
+/***** HenbGW Ltegw Sctp EP Data************************************************************/
+
+message HaS1mmeSctpRedEpData
+{
+	required uint32 ep_status           = 1;
+	required uint32 ep_id               = 2;
+	required uint32 server_ep_id        = 3;
+	required uint32 num_created_ep      = 4;
+	required uint32 ppi                 = 5;
+	
+	required uint32 n_assoc             = 6;
+	required uint32 last_used_assoc     = 7;
+
+	required uint32 this_port           = 8;
+	required uint32 naddr               = 9;
+	required uint32 l_backlog           = 10;
+	required uint32 flags               = 11;
+	required uint32 trc_flags           = 12;
+	
+	required uint32 appl_id             = 13;
+	required uint32 sk_type             = 14;
+	required uint32 moribund            = 15;
+	required uint32 cong_flag           = 16;
+	required bool  hostname_supported   = 17;
+	required bool  create_from_server   = 18;
+
+	optional bytes created_ep_id        = 19;
+	optional bytes sk_config            = 20;
+	optional bytes trx_cong_reg_def     = 21;
+	optional bytes rcv_cong_reg_def     = 22;
+
+	repeated bytes this_address         = 23;
+	optional bytes hostname             = 24;
+	
+	optional bytes family               = 25;
+	optional uint32 l_onoff             = 26;
+	optional uint32 l_linger            = 27;
+	required uint32 assoc_id            = 28;
+}
+
+//assoc_red_obj
+message HaS1mmeSctpRedEpAssocobj
+{
+	required uint32 ep_id               = 1;
+	required uint32 assoc_id            = 2;
+	required uint32 open                = 3;
+	required uint32 state               = 4;
+	
+	required uint32 init_retry          = 5;
+	required uint32 init_retry_per_path = 6;
+	required uint32 cookie_retry        = 7;
+	required uint32 shutdown_retry      = 8;
+	required uint32 shutdown_ack_retry  = 9;
+	required uint32 error_count         = 10;
+	required uint32 configured_local_primary_address_index = 11;
+
+	required uint32 local_tag           = 12;
+	required uint32 remote_tag          = 13;
+	
+	required uint32 local_virtual_tie_tag  = 14;
+	required uint32 peer_virtual_tie_tag   = 15;
+	required uint32 total_sent             = 16;
+	
+	required uint32 cookie_size            = 17;
+	
+	required bool  zero_win_prob_on        = 18;
+	required bool  conn_accepted           = 19;
+
+	optional bytes remain_time             = 20;
+	optional bytes timer_event             = 21;
+	optional bytes addr_index              = 22;
+
+	optional bytes trx_cong_reg_def        = 23;
+	optional bytes rcv_cong_reg_def        = 24;
+	optional bytes restart_option          = 25;
+	optional bytes partial_data            = 26;
+	optional bytes ecn                     = 27;
+	
+	optional bytes transmit                = 28;
+	optional bytes receive                 = 29;	
+	optional bytes config                  = 30;
+}
+
+
+/***** HenbGW Henbmgr******************************************************************/
+message HaHenbmInstCfg
+{
+    optional uint32            hm_gid_slot = 1;
+    optional uint32            hm_inst = 2;
+    optional uint32            mm_gid_slot = 3;
+    optional uint32            mm_inst = 4;
+
+    optional uint32             hm_logging_level =5;
+
+    optional uint32            hm_sctp_appid = 6;
+    optional uint32            hm_sctp_listener = 7;
+
+    // x2 ha
+    optional uint32            hm_x2_sctp_appid = 8;
+    optional uint32            hm_x2_sctp_listener = 9;
+}
+
+message HaHenbDataCb
+{
+    optional uint32             henb_dflt_paging_drx = 1;
+    optional uint32             henb_name_len = 2;
+    optional uint32             henb_access_mode =3;
+    optional uint32             henb_sctp_port = 4;
+    optional uint32             henb_states = 5;
+    optional uint32             henb_sctp_assoc_id = 6;
+    
+    optional bytes              henb_ip = 7;
+    optional uint32             mme_index = 8;
+    optional uint32             lenb_id =9;
+
+    /* henb's global enb-id */
+    optional bytes             henb_plmnid = 10;    // 3-byte
+    optional uint32            henb_enb_id_type = 11;   // 1-byte
+    optional bytes             henb_enb_id = 12;     // 4-byte
+
+    optional uint32            henb_s1ap_id = 13;
+    optional bytes             henb_name = 14; // actually an array
+}
+
+message HaHenbDataCsg
+{
+    optional uint32              henb_s1ap_id = 1;
+    repeated bytes            henb_csg_id =2 ; // 27-bit string, high bits
+
+}
+
+message HaHenbDataTai
+{
+    optional uint32               henb_s1ap_id = 1;
+    repeated bytes              henb_tai_plmn =2;
+    repeated bytes              henb_tai_tac = 3 ;
+}
+
+message HaUeDataCb
+{
+    optional uint32            mme_ue_s1ap_id =1;
+    optional uint32            gw_ue_s1ap_id =2;
+    optional uint32            enb_ue_s1ap_id =3;
+    optional uint32            ue_enb_s1ap_id =4;
+    optional uint32            mme_index =5;
+    optional uint32            num_erabs =6;
+    optional uint32            guard_timer_in_use =7;
+
+    optional bytes             imsi_tmsi_info =8;
+
+   //henbmgr_ue_ambr_t :No separate into the message 
+    optional uint64            ue_ul_ambr = 9;
+    optional uint64            ue_dl_ambr = 10;
+
+    optional uint64            transient_ue_ul_ambr =11;
+    optional uint64            transient_ue_dl_ambr = 12;
+
+   //NO separate message
+  //  repeated HaUeErabInfo     ue_erab_info  =13;
+    repeated bytes           ue_erab_info = 13;
+}
+
+message HaTeDataCb
+{
+    optional uint32            te_qos_set = 1;
+    optional uint32            transient_erab_qos_set =2;
+    optional uint32            te_lclid = 3;
+    optional bytes             te_ul_addr =4;   // SGW tunnel end address
+    optional uint32            te_ul_id =5;     // SGW tunnel end id
+    optional bytes             te_dl_addr = 6;   // HeNB tunnel end address
+    optional uint32            te_dl_id = 7;     // HeNB tunnel end id
+
+
+    optional bytes            ul_stats = 8; //HaTeGtpuStat use other table 
+    optional bytes            dl_stats = 9;
+    optional bytes            te_qos = 10;    
+    optional bytes            transient_erab_qos = 11;
+}
+
+message HaGtpuStat
+{
+    optional uint64                    tt_pkts_rcvd = 1;
+    optional uint64                    tt_bytes_rcvd = 2;
+    optional uint64                    tt_pkts_sent = 3;
+    optional uint64                    tt_bytes_sent = 4;
+    optional uint64                    tt_pkts_dropped_no_egress_te = 5;
+    optional uint64                    tt_bytes_dropped_no_egress_te = 6;
+    optional uint64                    tt_pkts_dropped_send_failure = 7;
+    optional uint64                    tt_bytes_dropped_send_failure = 8;
+}
+
+message HaX2HenbDataCb
+{
+    optional uint32                    henb_sctp_port = 1;
+    optional bytes                     henb_ip =2;
+
+    optional uint32                    henb_sctp_assoc_id =3;
+
+    /* henb's global enb-id */
+    optional bytes             henb_plmnid = 4;    // 3-byte
+    optional uint32            henb_enb_id_type = 5;   // 1-byte
+    optional bytes             henb_enb_id = 6;     // 4-byte
+
+    optional uint32                    henb_s1ap_id = 7;
+    optional uint32                    henb_x2ap_id = 8;
+
+    //states
+    optional uint32                sctp_up = 9;
+    optional uint32                x2ap_up = 10;
+    optional uint32                have_geid = 11;
+    optional uint32                have_assoc = 12;
+    optional uint32                have_ip = 13;
+    optional uint32                have_s1ap =14;
+    optional uint32                conn_req = 15;
+
+}
+/***** henbmgr Sctp******************************************/
+//global data
+message HaHenbSctpRedGlbData
+{
+	required uint32 pmtu_timer_rem_time = 1;
+	required uint32 max_ep              = 2;
+	required uint32 max_appl            = 3;
+	required uint32 max_assoc           = 4;
+	required uint32 min_tx_buffers           = 5;
+	required uint32 med_tx_buffers           = 6;
+	required uint32 max_tx_buffers           = 7;
+	required uint32 min_rx_buffers           = 8;
+	
+	required uint32 med_rx_buffers           = 9;
+	required uint32 max_rx_buffers           = 10;
+	required uint32 min_reserve_buffers      = 11;
+	required uint32 med_reserve_buffers      = 12;
+	required uint32 max_reserve_buffers      = 13;
+	required uint32 max_streams_per_assoc    = 14;
+
+	required uint32 init_in_streams          = 15;
+	required uint32 init_out_streams         = 16;
+	required uint32 standard_udp_port        = 17;
+
+	required bytes  old_mac_key              = 18;
+	required bytes  current_mac_key          = 19;
+	
+	repeated uint32 active_appl_list         = 20;
+	repeated bytes  addr_list                = 21;
+	
+	optional bytes  sctp_def_prot_params     = 22;
+	optional bytes  trx_cong_reg_def         = 23;
+	optional bytes  rcv_cong_reg_def         = 24;
+	//Listener
+	repeated uint32 listener_ep_id           = 25; // number of listeners
+}
+
+message HaHenbSctpRedGlbEp
+{
+	optional uint32  num_active_ep      = 1;
+	optional uint32  num_in_use_ep      = 2;
+	optional uint32  last_allocated_ep  = 3;
+	repeated uint32  active_ep_list     = 4;
+}
+
+message HaHenbSctpRedGlbPmtu
+{
+	repeated bytes red_pmtu_snapshot_db = 1;
+}
+
+// ep data
+message HaHenbSctpRedEpData
+{
+	required uint32 ep_status           = 1;
+	required uint32 ep_id               = 2;
+	required uint32 server_ep_id        = 3;
+	required uint32 num_created_ep      = 4;
+	required uint32 ppi                 = 5;
+	
+	required uint32 n_assoc             = 6;
+	required uint32 last_used_assoc     = 7;
+
+	required uint32 this_port           = 8;
+	required uint32 naddr               = 9;
+	required uint32 l_backlog           = 10;
+	required uint32 flags               = 11;
+	required uint32 trc_flags           = 12;
+	
+	required uint32 appl_id             = 13;
+	required uint32 sk_type             = 14;
+	required uint32 moribund            = 15;
+	required uint32 cong_flag           = 16;
+	required bool  hostname_supported   = 17;
+	required bool  create_from_server   = 18;
+
+	optional bytes created_ep_id        = 19;
+	optional bytes sk_config            = 20;
+	optional bytes trx_cong_reg_def     = 21;
+	optional bytes rcv_cong_reg_def     = 22;
+
+	repeated bytes this_address         = 23;
+	optional bytes hostname             = 24;
+	
+	optional bytes family               = 25;
+	optional uint32 l_onoff             = 26;
+	optional uint32 l_linger            = 27;
+	required uint32 assoc_id            = 28;
+}
+
+//assoc_red_obj
+message HaHenbSctpRedEpAssocobj
+{
+	required uint32 ep_id               = 1;
+	required uint32 assoc_id            = 2;
+	required uint32 open                = 3;
+	required uint32 state               = 4;
+	
+	required uint32 init_retry          = 5;
+	required uint32 init_retry_per_path = 6;
+	required uint32 cookie_retry        = 7;
+	required uint32 shutdown_retry      = 8;
+	required uint32 shutdown_ack_retry  = 9;
+	required uint32 error_count         = 10;
+	required uint32 configured_local_primary_address_index = 11;
+
+	required uint32 local_tag           = 12;
+	required uint32 remote_tag          = 13;
+	
+	required uint32 local_virtual_tie_tag  = 14;
+	required uint32 peer_virtual_tie_tag   = 15;
+	required uint32 total_sent             = 16;
+	
+	required uint32 cookie_size            = 17;
+	
+	required bool  zero_win_prob_on        = 18;
+	required bool  conn_accepted           = 19;
+
+	optional bytes remain_time             = 20;
+	optional bytes timer_event             = 21;
+	optional bytes addr_index              = 22;
+
+	optional bytes trx_cong_reg_def        = 23;
+	optional bytes rcv_cong_reg_def        = 24;
+	optional bytes restart_option          = 25;
+	optional bytes partial_data            = 26;
+	optional bytes ecn                     = 27;
+	
+	optional bytes transmit                = 28;
+	optional bytes receive                 = 29;	
+       optional bytes config                  = 30;
+}
+
+
+
+/* db/row change notification */
+message HaChRowMsg
+{
+ enum EVENT {
+    DELETE = 0; 
+    COMPLETE_UPDATE = 1; 
+    PARTIAL_UPDATE = 2; 
+ }
+
+ optional EVENT event = 1;
+ optional bytes key = 2;
+ repeated int32 column_id = 3;
+}
+/*End*/

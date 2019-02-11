@@ -1,0 +1,15 @@
+gcc -c test.c -o test.o -I/usr/lib/glib-2.0 -g -O2 `pkg-config --cflags --libs gtk+-2.0`  -lprotobuf-c -Wfatal-errors -w
+gcc -c db_api.c -o db_api.o -I/usr/lib/glib-2.0 -g -O2 `pkg-config --cflags --libs gtk+-2.0`  -lprotobuf-c -Wfatal-errors -w
+gcc -c vnf_timer.c -o vnf_timer.o -I/usr/lib/glib-2.0 -g -O2 `pkg-config --cflags --libs gtk+-2.0`
+gcc -c db_api_sync.c -o db_api_sync.o -I/usr/lib/glib-2.0 -g -O2 `pkg-config --cflags --libs gtk+-2.0`
+gcc -c testsync.c -o testsync.o -I/usr/lib/glib-2.0 -g -O2 `pkg-config --cflags --libs gtk+-2.0`
+gcc -c scheduler.c -o scheduler.o
+gcc -c record_ha.pb-c.c -o record_ha.pb-c.o
+gcc -c record_table.c -o record_table.o
+gcc -c db_api_log.c -o db_api_log.o -I/usr/lib/glib-2.0 -g -O2 `pkg-config --cflags --libs gtk+-2.0`
+gcc -c db_api_common.c -o db_api_common.o -I/usr/lib/glib-2.0 -g -O2 `pkg-config --cflags --libs gtk+-2.0`
+gcc -c record_alarm.pb-c.c -o record_alarm.pb-c.o
+gcc -c record_cdb.pb-c.c -o record_cdb.pb-c.o
+
+
+
